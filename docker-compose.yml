@@ -1,0 +1,50 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: user
+        uid: 1000
+      context: ./
+      dockerfile: ./.docker/Dockerfile
+    image: chat
+    container_name: chat-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./chat/:/var/www
+    networks:
+      - chat
+
+  nginx:
+    image: nginx:alpine
+    container_name: chat-nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./chat/:/var/www
+      - ./.docker/nginx/:/etc/nginx/conf.d/
+    networks:
+      - chat
+
+  db:
+    image: mysql:5.7.29
+    container_name: chat-db
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: chat
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+      MYSQL_USER: root
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    networks:
+      - chat
+
+networks:
+  chat:
+    driver: bridge
